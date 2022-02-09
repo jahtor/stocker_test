@@ -1,5 +1,11 @@
-#импортим класс Stocker
-from stocker import Stocker
+import json
+import yfinance
 
-#создаем объект с тикером
-microsoft = Stocker(ticker='MSFT')
+from stock_data import StockData
+
+# data = yfinance.Ticker("FB")
+# print('Info')
+# print(json.dumps(data.info, indent=4, sort_keys=True))
+
+data = StockData('FB')
+
