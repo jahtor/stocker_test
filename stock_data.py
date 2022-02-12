@@ -16,7 +16,7 @@ class StockData:
         self._min_max = MinMaxScaler(feature_range=(0, 1))
 
     def __data_verification(self, train):
-        print('Data Verification')
+        print('Проверка данных')
         print('Средняя:', train.mean(axis=0))
         print('Максимум:', train.max())
         print('Минимум:', train.min())
@@ -31,27 +31,31 @@ class StockData:
     def get_ticker(self):
         return self._sec.info['symbol']
 
+    def get_min_max(self):
+        return self._min_max
+
     def download_to_numpy(self, time_steps):
         end_date = datetime.date.today()
         # print('End Date: ' + end_date.strftime("%Y-%m-%d"))
         data = yf.download(tickers=[self._stock], start=self.start_date, end=end_date)[['Close']]
+        # добавляем индекс для данных
         data = data.reset_index()
+        # сохраняем данные в cvs
         data.to_csv(os.path.join(self.project_folder, self._stock + '_downloaded_data' + '.csv'))
 
-        # разделяем данные на training & test
+        # разделяем данные на training & test переменной validation_date
         training_data = data[data['Date'] < self.validation_date].copy()
         test_data = data[data['Date'] >= self.validation_date].copy()
         # Set the data frame index using column Date
         training_data = training_data.set_index('Date')
-        # print(training_data)
         test_data = test_data.set_index('Date')
         # print(test_data)
 
-        # усредняем результат (0-1)
+        # нормализуем данные от 0 до 1
         train_scaled = self._min_max.fit_transform(training_data)
-        self.__data_verification(train_scaled)
+        # self.__data_verification(train_scaled)
 
-        # Training Data Transformation
+        # Training Data Transformation (2D -> 3D)
         x_train = []
         y_train = []
         for i in range(time_steps, train_scaled.shape[0]):
@@ -63,9 +67,10 @@ class StockData:
 
         total_data = pd.concat((training_data, test_data), axis=0)
         inputs = total_data[len(total_data) - len(test_data) - time_steps:]
+
         test_scaled = self._min_max.fit_transform(inputs)
 
-        # Testing Data Transformation
+        # Testing Data Transformation (2D -> 3D)
         x_test = []
         y_test = []
         for i in range(time_steps, test_scaled.shape[0]):
